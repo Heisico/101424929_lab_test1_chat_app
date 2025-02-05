@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Chat Room</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fc;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align content to the top */
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        #messages {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+            height: 300px;
+            overflow-y: scroll;
+            margin: 20px 0;
+        }
+
+        #messageInput {
+            padding: 10px;
+            margin-right: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            width: 80%;
+            font-size: 16px;
+        }
+
+        #sendMessage {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 18%;
+        }
+
+        #sendMessage:hover {
+            background-color: #45a049;
+        }
+
+        #typingIndicator {
+            font-size: 14px;
+            color: #888;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        #logout {
+            padding: 10px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100px;
+            align-self: center;
+        }
+
+        #logout:hover {
+            background-color: #e53935;
+        }
+
+        .message {
+            padding: 5px;
+            margin: 5px 0;
+            background-color: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .message strong {
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h2>Chat Room</h2>
+    <div id="messages"></div>
+    <input type="text" id="messageInput" placeholder="Type a message..." />
+    <button id="sendMessage">Send</button>
+    <p id="typingIndicator"></p>
+    <button id="logout">Logout</button>
+
+    <script>
+        const socket = io();
+        const username = localStorage.getItem('username');
+        const room = prompt('Enter room name:') || 'default';
+
+        socket.emit('joinRoom', { username, room });
+
+        socket.on('message', (data) => {
+            $('#messages').append(`<p><strong>${data.from_user}:</strong> ${data.message}</p>`);
+        });
+
+        $('#sendMessage').click(() => {
+            const message = $('#messageInput').val();
+            socket.emit('chatMessage', { username, message });
+            $('#messageInput').val('');
+        });
+
+        $('#messageInput').on('input', () => {
+            socket.emit('typing', { username });
+        });
+
+        socket.on('typing', (user) => {
+            $('#typingIndicator').text(`${user} is typing...`);
+            setTimeout(() => $('#typingIndicator').text(''), 3000);
+        });
+
+        $('#logout').click(() => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            window.location.href = 'login.html';
+        });
+    </script>
+</body>
+</html>
